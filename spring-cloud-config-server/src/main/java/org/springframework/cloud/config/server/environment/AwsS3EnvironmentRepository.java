@@ -26,11 +26,13 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectIdBuilder;
 
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.cloud.aws.core.io.s3.PathMatchingSimpleStorageResourcePatternResolver;
 import org.springframework.cloud.config.environment.Environment;
 import org.springframework.cloud.config.environment.PropertySource;
 import org.springframework.cloud.config.server.config.ConfigServerProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.StringUtils;
 
 /**
@@ -49,6 +51,7 @@ public class AwsS3EnvironmentRepository
 
 	private final ConfigServerProperties serverProperties;
 
+	private final ResourceLoader resourceLoader;
 	protected int order = Ordered.LOWEST_PRECEDENCE;
 
 	public AwsS3EnvironmentRepository(AmazonS3 s3Client, String bucketName,
@@ -56,6 +59,7 @@ public class AwsS3EnvironmentRepository
 		this.s3Client = s3Client;
 		this.bucketName = bucketName;
 		this.serverProperties = server;
+		this.resourceLoader = new PathMatchingSimpleStorageResourcePatternResolver(s3Client, null);
 	}
 
 	@Override
@@ -167,7 +171,7 @@ public class AwsS3EnvironmentRepository
 				+ application;
 
 		return new Locations(application, profiles, label, null,
-				new String[] { baseLocation });
+				new String[] { baseLocation }, this.resourceLoader);
 	}
 
 }

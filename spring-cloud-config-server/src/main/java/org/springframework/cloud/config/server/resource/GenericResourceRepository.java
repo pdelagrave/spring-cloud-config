@@ -43,7 +43,7 @@ public class GenericResourceRepository
 
 	private static final Log logger = LogFactory.getLog(GenericResourceRepository.class);
 
-	private ResourceLoader resourceLoader;
+	private ResourceLoader defaultResourceLoader;
 
 	private SearchPathLocator service;
 
@@ -53,7 +53,7 @@ public class GenericResourceRepository
 
 	@Override
 	public void setResourceLoader(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
+		this.defaultResourceLoader = resourceLoader;
 	}
 
 	@Override
@@ -61,15 +61,18 @@ public class GenericResourceRepository
 			String path) {
 
 		if (StringUtils.hasText(path)) {
-			String[] locations = this.service.getLocations(application, profile, label)
-					.getLocations();
+			SearchPathLocator.Locations searchPathLocations = this.service.getLocations(application, profile, label);
+
+			final ResourceLoader resourceLoader = searchPathLocations.getResourceLoader() != null ? searchPathLocations
+					.getResourceLoader() : defaultResourceLoader;
+
+			String[] locations = searchPathLocations.getLocations();
 			try {
-				for (int i = locations.length; i-- > 0;) {
+				for (int i = locations.length; i-- > 0; ) {
 					String location = locations[i];
 					for (String local : getProfilePaths(profile, path)) {
 						if (!isInvalidPath(local) && !isInvalidEncodedPath(local)) {
-							Resource file = this.resourceLoader.getResource(location)
-									.createRelative(local);
+							Resource file = resourceLoader.getResource(location).createRelative(local);
 							if (file.exists() && file.isReadable()) {
 								return file;
 							}
